@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Business.Abstract;
+using Business.BusinessAspects.Autofac;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Validation;
@@ -20,17 +21,24 @@ namespace Business.Concrete
     public class ProductManager : IProductService
     {
         IProductDal _productDal;
-        ICategoryService _categoryService;
+        ICategoryService _categoryService;//CategoryDal oluşturulmaz bu sebeble servisini çağırmalıyız
         public ProductManager(IProductDal productDal, ICategoryService categoryService)
         {
             _productDal = productDal;
             _categoryService = categoryService;
         }
-        int counter = 0;
+        //Claim :Yetki
+        [SecuredOperation("admin,editor")]
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-            //İş Kuralları
+            //İş Kurallarıları ile Validation Arasındaki fark
+            /*
+              Validation :Veriyi eklerken veya güncellerken o verinin bir takım kurallardan geçilmesi gerekmektedir
+                örneğin 10 karakteri geçmez veya girilen bir mail ise @mail.com tarzı ile bitmesi gerekir.
+               İş kuralları ise eklenen o veriyi incelememizi sağlar.Veritabanında o verinin adında bir başka
+               ürün olup olmadığı örneği verilebilir.
+             */
             IResult result= BusinessRules.Run(CheckProductNameIsSame(product.ProductName),
                 CheckIfProductCountOfCategoryCorrect(product.CategoryId),
                 CalculateCategoryCount());
